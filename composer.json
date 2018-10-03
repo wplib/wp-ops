@@ -23,7 +23,10 @@
 		"php": ">=7.0"
 	},
 	"autoload": {
-		"psr-4": { "WP_Ops\\": "includes/" }
+		"psr-4": {
+			"WP_Ops\\": "includes/",
+			"": "/"
+		}
 	},
 	"support": {
 		"email": "team@wplib.org",

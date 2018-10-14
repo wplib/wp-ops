@@ -64,9 +64,8 @@ class Meta {
 			)
 		));
 
-		$this->_meta_id    = ! is_null( $args[ 'meta_id' ] )
-			? intval( $args[ 'meta_id' ] )
-			: null;
+		$this->_meta_id    = Util::null_if_zero( $args[ 'meta_id' ], Util::AS_INT );
+		$this->_object_id  = Util::null_if_zero( $args[ 'object_id' ], Util::AS_INT );
 
 		$this->_meta_value = $args[ 'meta_value' ];
 

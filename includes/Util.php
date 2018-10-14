@@ -3,6 +3,9 @@ namespace WP_Ops;
 
 class Util {
 
+	const AS_MIXED = 0;
+	const AS_INT = 1;
+
 	static function guid() {
 
 		if ( function_exists( 'com_create_guid' ) === true ) {
@@ -32,6 +35,18 @@ class Util {
 		return is_callable( $target )
 			? call_user_func_array( $target, $args )
 			: $target;
+	}
+
+	/**
+	 * @param mixed $value
+	 * @param int $as
+	 *
+	 * @return mixed|null
+	 */
+	static function null_if_zero( $value, $as = self::AS_MIXED ) {
+		return 0 !== $value
+			? ( self::AS_INT === $as ? intval( $value ) : $value )
+			: null;
 	}
 
 }

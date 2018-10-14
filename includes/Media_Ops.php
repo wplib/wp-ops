@@ -18,16 +18,38 @@ class Media_Ops {
 		IMAGETYPE_PNG
 	);
 
+	/**
+	 * @var string[]
+	 */
 	private $_uploads_base;
 
+	/**
+	 * @var mixed
+	 */
 	private $_last_result;
 
+	/**
+	 * @param array $args {
+	 *      @type string $path
+	 *      @type bool $uploads_only
+	 *      @type bool $dirs_only
+	 * }
+	 * @return null[]|Media[]
+	 */
 	function delete_images( $args = array() ) {
 		$args = Util::parse_args( $args );
 		$args[ 'images_only' ] = true;
 		return $this->_last_result = $this->delete_uploads( $args );
 	}
 
+	/**
+	 * @param array $args {
+	 *      @type string $path
+	 *      @type bool $uploads_only
+	 *      @type bool $dirs_only
+	 * }
+	 * @return null[]|Media[]
+	 */
 	function delete_uploads( $args = array() ) {
 		$args[ 'path' ] = '';
 		$args[ 'dirs_only' ] = true;
@@ -35,6 +57,14 @@ class Media_Ops {
 		return $this->_last_result = $this->delete_many( $args );
 	}
 
+	/**
+	 * @param array $args {
+	 *      @type string $path
+	 *      @type bool $uploads_only
+	 *      @type bool $dirs_only
+	 * }
+	 * @return null[]|Media[]
+	 */
 	function delete_many( $args = array() ) {
 		$args = Util::parse_args( $args, array(
 			'path'         => '',
@@ -63,6 +93,15 @@ class Media_Ops {
 		return $this->_last_result = $result;
 	}
 
+	/**
+	 * @param string $path
+	 * @param array $args {
+	 *      @type bool $images_only
+	 *      @type bool $check_guid
+	 * }
+	 *
+	 * @return Media|null
+	 */
 	function delete_path( $path, $args = array() ) {
 		$args = Util::parse_args($args, array(
 			'images_only' => false,

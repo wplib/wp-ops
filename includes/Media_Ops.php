@@ -66,20 +66,31 @@ class Media_Ops {
 	function delete_path( $path, $args = array() ) {
 		$args = Util::parse_args($args, array(
 			'images_only' => false,
+			'check_guid'  => true,
 		));
 		$path = $this->_maybe_make_uploads_path_absolute( $path );
 		$iterator = new RecursiveDirectoryIterator( $path, RecursiveDirectoryIterator::SKIP_DOTS );
 		$files = new RecursiveIteratorIterator( $iterator, RecursiveIteratorIterator::CHILD_FIRST );
+		$dirpaths = array();
+		$result = null;
 		foreach( $files as $file ) {
 			$filepath = $file->getRealPath();
 			if ( $file->isDir() ) {
-				@rmdir( $filepath );
-			} elseif ( $args[ 'images_only' ] || ! $this->_is_image_file( $dirname ) ) {
-				@unlink( $filepath );
-			} else {
+				$dirpaths[] = $filepath;
 				continue;
 			}
-			$result[ $filepath ] = new Media( $filepath );
+			if ( $args[ 'images_only' ] && ! $this->_is_image_file( $filepath ) ) {
+				continue;
+			}
+			$media = new Media( $filepath );
+			if ( $args[ 'check_guid' ] && WP_Ops::post()->find_by( 'guid', $media->url() ) ) {
+				continue;
+			}
+			@unlink( $filepath );
+			$result[ $filepath ] = $media;
+		}
+		foreach( $dirpaths as $dirpath ) {
+			@rmdir( $dirpath );
 		}
 		@rmdir( $path );
 		return $this->_last_result = $result;

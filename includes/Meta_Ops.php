@@ -82,7 +82,7 @@ class Meta_Ops {
 	 */
 	function list( $args = array() ) {
 		global $wpdb;
-		$query = Util::parse_args($query, array(
+		$query = Util::parse_args( $query, array(
 			'post_ids'    => null,
 			'user_ids'    => null,
 			'term_ids'    => null,
@@ -110,20 +110,33 @@ class Meta_Ops {
 			$meta[ $result->meta_id ] = self::make_new( $this->_type, $result );
 		}
 		return $_last_result = $meta;
-
 	}
 
-	static function sanitize_type( $type ) {
-		return preg_match( '#^(post|user|term|comment)$#', strtolower( $type ) )
-			? strtolower( $type )
+	/**
+	 * @param string $meta_type
+	 *
+	 * @return null|string
+	 */
+	static function sanitize_type( $meta_type ) {
+		return preg_match( '#^(post|user|term|comment)$#', strtolower( $meta_type ) )
+			? strtolower( $meta_type )
 			: null;
 	}
 
+	/**
+	 * @return array
+	 */
 	static function valid_types() {
 		return explode( '|', 'post|user|term|comment' );
 	}
 
-	static function get_meta_sql( $type, $args = array() ) {
+	/**
+	 * @param $meta_type
+	 * @param array $args
+	 *
+	 * @return string
+	 */
+	static function get_meta_sql( $meta_type, $args = array() ) {
 		global $wpdb;
 		$args = Util::parse_args( $args, array_merge(
 			$prefix_args = array(
@@ -131,14 +144,14 @@ class Meta_Ops {
 				'insert_sql' => null,
 				'replace_sql'=> null,
 				'delete_sql' => null,
-				'select_sql' => "SELECT meta_id, {$type}_id as object_id, meta_key",
+				'select_sql' => "SELECT meta_id, {$meta_type}_id as object_id, meta_key",
 			),
 			array(
 				'where_sql'  => null,
 				'meta_value' => false,
 			)
 		));
-		$table = "{$wpdb->prefix}{$type}meta";
+		$table = "{$wpdb->prefix}{$meta_type}meta";
 		/**
 		 * Use the first non-null object_id
 		 */

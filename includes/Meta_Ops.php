@@ -96,12 +96,12 @@ class Meta_Ops {
 
 		$where_sql = '';
 		foreach( self::valid_types() as $valid_type ) {
-			if ( empty( $args[ "{$valid_type}_id" ] ) ) {
+			if ( empty( $query[ "{$valid_type}_id" ] ) ) {
 				continue;
 			}
-			$object_ids = is_array( $args[ "{$valid_type}_ids" ] )
-				? array_map( 'intval', $args[ "{$valid_type}_ids" ] )
-				: array( intval( $args[ "{$valid_type}_ids" ] ) );
+			$object_ids = is_array( $query[ "{$valid_type}_ids" ] )
+				? array_map( 'intval', $query[ "{$valid_type}_ids" ] )
+				: array( intval( $query[ "{$valid_type}_ids" ] ) );
 
 			$where_sql = ' AND {$valid_type}_id IN (' . implode( ',', $object_ids ) . ')';
 			break;

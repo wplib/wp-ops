@@ -67,12 +67,12 @@ class Post {
 	 * @return Meta
 	 */
 	function update_meta( $meta_key, $meta_value ) {
-		$meta = new Meta( 'post', $meta_key, array(
+		$post_meta = new PostMeta( $meta_key, array(
 			'post_id'    => $this->_post_id,
 			'meta_value' => $meta_value,
-		) );
-		$meta->update();
-		return $meta;
+		));
+		$post_meta->update();
+		return $post_meta;
 	}
 
 	/**
@@ -162,9 +162,9 @@ class Post {
 				'meta_value' => function () use ( $media ) { return $media->uploads_filepath(); },
 			));
 			$meta_key = Util::get_arg( $args[ 'meta_key' ] );
-			$meta = new Meta( 'post', $meta_key, "post_id={$this->_post_id}" );
-			$media->set_meta( $meta );
-			$post->update( Util::get_arg( $args[ 'meta_value' ] ) );
+			$post_meta = new PostMeta( $meta_key, "post_id={$this->_post_id}" );
+			$media->set_meta( $post_meta );
+			$post_meta->update( Util::get_arg( $args[ 'meta_value' ] ) );
 			WP_Ops::logger()->log(
 				"Added meta key [%s] to post %d.\n",
 				$meta_key,

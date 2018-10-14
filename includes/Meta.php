@@ -6,37 +6,71 @@ use WP_Query;
 use WP_Post;
 use WP_Error;
 
-class Meta {
+abstract class Meta {
 
 	/**
 	 * @var string
 	 */
-	private $_type;
+	protected $_type;
 
 	/**
 	 * @var int
 	 */
-	private $_meta_id;
+	protected $_meta_id;
 
 	/**
 	 * @var int
 	 */
-	private $_object_id;
+	protected $_object_id;
 
 	/**
 	 * @var string
 	 */
-	private $_meta_key;
+	protected $_meta_key;
 
 	/**
 	 * @var mixed
 	 */
-	private $_meta_value;
+	protected $_meta_value;
 
 	/**
 	 * @var bool
 	 */
-	private $_exists;
+	protected $_exists;
+
+	/**
+	 * Meta Factory
+	 *
+	 * @param string $type
+	 * @param string $meta_key
+	 * @param array $args
+	 */
+	static function make_new( $type, $meta_key, $args ) {
+		do {
+
+			$meta = null;
+
+			$args = wp_parse_args( $args, array(
+			    'class_name' => __NAMESPACE__ . '\\' . ucfirst( $type ) . 'Meta',
+			));
+
+			if ( ! class_exists( $args[ 'class_name' ] ) ) {
+				trigger_error( sprintf(
+					'No class [%s] for meta type [%s] when calling %s().',
+					$args[ 'class_name' ],
+					$type,
+					__METHOD__
+				));
+				break;
+			}
+
+			$class_name = $args[ 'class_name' ];
+
+			$meta = new $class_name( $meta_key, $args );
+
+		} while ( false );
+		return $meta;
+	}
 
 	/**
 	 * Meta constructor.
@@ -50,35 +84,16 @@ class Meta {
 		$this->_type      = Meta_Ops::sanitize_type( $type );
 		$this->_meta_key  = $meta_key;
 
-		$args = wp_parse_args( $args, array_merge(
-			array(
-				'meta_id'    => null,
-				'meta_value' => null,
-			),
-			$object_id_fields = array(
-				'object_id'  => null,
-				'post_id'    => null,
-				'user_id'    => null,
-				'term_id'    => null,
-				'comment_id' => null,
-			)
+		$args = wp_parse_args( $args, array(
+			'meta_id'    => null,
+			'object_id'  => null,
+			'meta_value' => null,
 		));
 
 		$this->_meta_id    = Util::null_if_zero( $args[ 'meta_id' ], Util::AS_INT );
 		$this->_object_id  = Util::null_if_zero( $args[ 'object_id' ], Util::AS_INT );
 
 		$this->_meta_value = $args[ 'meta_value' ];
-
-		/**
-		 * Use the first non-null object_id
-		 */
-		foreach( array_keys( $object_id_fields ) as $field_name ) {
-			if ( is_null( $args[ $field_name ] ) ) {
-				continue;
-			}
-			$this->_object_id = intval( $args[ $field_name ] );
-			break;
-		}
 
 	}
 

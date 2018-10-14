@@ -167,7 +167,7 @@ class Meta_Ops {
 	 * @return Meta
 	 */
 	static function make_new( $type, $meta_obj ) {
-		return new Meta( $type, $meta_obj->meta_key, array(
+		return Meta::make_new( $type, $meta_obj->meta_key, array(
 			'meta_id'   => $meta_obj->meta_id,
 			'object_id' => $meta_obj->object_id,
 		));
@@ -192,7 +192,7 @@ class Meta_Ops {
 				'where_sql' => $wpdb->prepare( 'AND meta_id=%d', $meta ),
 			));
 			if ( ! $result = $wpdb->get_results( $sql ) ) {
-				$meta = new Meta( $type, 'unknown' );
+				$meta = Meta::make_new( $type, 'unknown' );
 				break;
 			}
 			$meta = self::make_new( $type, $result );

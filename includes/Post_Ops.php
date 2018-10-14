@@ -29,12 +29,7 @@ class Post_Ops {
 	 * @return array
 	 */
 	function delete_all( $args = array() ) {
-		return $this->delete_many( array(
-			'post_type'     => 'any',
-			'post_status'   => 'any',
-			'post_per_page' => -1,
-			'force'         => true,
-		), $args );
+		return $this->delete_many( [], $args );
 	}
 
 	/**
@@ -43,6 +38,11 @@ class Post_Ops {
 	 * @return WP_Post[]|WP_Error[]
 	 */
 	function delete_many( $query = array(), $args = array() ) {
+		$query = Util::parse_args( $query, array(
+			'post_type'      => [ $this->_post_type, 'revision' ],
+			'post_status'    => [ 'publish', 'trash', 'auto-draft', 'inherit' ],
+			'posts_per_page' => - 1,
+		));
 		$args = Util::parse_args( $args, array(
 			'truncate'  => false,
 			'reset'     => false,

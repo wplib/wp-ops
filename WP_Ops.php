@@ -94,14 +94,16 @@ class WP_Ops {
 	}
 
 	/**
+	 * @param string $meta_type
+	 *
 	 * @return \WP_Ops\Meta_Ops
 	 */
-	static function meta( $type ) {
+	static function meta( $meta_type ) {
 		$instance = self::instance();
-		if ( ! isset( $instance->_meta[ $type ] ) ) {
-			$instance->_meta[ $type ] = new \WP_Ops\Meta_Ops( $type );
+		if ( ! isset( $instance->_meta[ $meta_type ] ) ) {
+			$instance->_meta[ $meta_type ] = new \WP_Ops\Meta_Ops( $meta_type );
 		}
-		return $instance->_meta[ $type ];
+		return $instance->_meta[ $meta_type ];
 	}
 
 	/**

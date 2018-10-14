@@ -46,7 +46,7 @@ class Post_Ops {
 		$args = Util::parse_args( $args, array(
 			'truncate'  => false,
 			'reset'     => false,
-			'force'     => true,
+			'force'     => false,
 		));
 		$query[ 'fields' ] = 'ids';
 		$results = array();

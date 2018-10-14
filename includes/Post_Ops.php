@@ -10,14 +10,18 @@ use WP_Ops;
 class Post_Ops {
 
 	/**
-	 * @var Media
+	 * @var string
 	 */
-	private static $_current_media;
+	private $_post_type = 'any';
 
 	/**
 	 * @var mixed
 	 */
 	private $_last_result;
+
+	function __construct( $post_type = 'any' ) {
+		$this->_post_type = $post_type;
+	}
 
 	/**
 	 * @param int|int[] $post_ids
@@ -114,11 +118,11 @@ class Post_Ops {
 		if ( $args[ 'truncate' ] ) {
 			DB_Ops::truncate_table( 'posts' );
 		}
-		$files_dir = WP_Ops::files_dir();
+		$assets_dir = WP_Ops::assets_dir();
 		$post_objs = WP_Ops::transform_test_data( $post_arr );
 		$posts = array();
 		foreach( $post_objs as $post_obj ) {
-			$filepath = "{$files_dir}/{$post_obj->slug}.html";
+			$filepath = "{$assets_dir}/{$post_obj->slug}.html";
 			$post_content = is_file( $filepath )
 				? file_get_contents( $filepath )
 				: null;
@@ -160,9 +164,9 @@ class Post_Ops {
 	}
 
 	/**
+	 * @param array[] $post_media
 	 * @param Post[] $posts
 	 * @param Media[] $media_objs
-	 * @param object[] $post_media
 	 *
 	 * @example $post_media: [
 	 *      [ 'post_slug',  'media_path',           'type',         'meta_key'   ],
@@ -173,8 +177,9 @@ class Post_Ops {
 	 * ]
 	 *
 	 */
-	function associate_media( $posts, $media_items, $post_media ) {
+	function associate_media_from( $post_media, $posts, $media_items ) {
 		$results = array();
+		$post_media = WP_Ops::transform_test_data( $post_media );
 		foreach( $post_media as $media_obj ) {
 			if ( ! isset( $posts[ $slug = $media_obj->post_slug ] ) ) {
 				continue;
@@ -220,14 +225,15 @@ class Post_Ops {
 		global $wpdb;
 
 		switch ( $by ) {
+			case 'ID':
 			case 'post_id':
 				$by = 'ID';
-			case 'ID':
 			case 'guid':
-				$sql = "SELECT ID FROM {$wpdb->posts} WHERE {$by}=%d";
+				$sql = "SELECT ID FROM {$wpdb->posts} WHERE {$by}=%s";
 				$post_ids = $wpdb->get_col( $wpdb->prepare( $sql, $lookup_value ) );
 				break;
 		}
+		$posts = array();
 		foreach( $post_ids as $post_id ) {
 			$posts[ $post_id ] = new Post( $post_id );
 		}

@@ -39,7 +39,6 @@ class WP_Ops {
 
 	function __construct() {
 		$this->_media = new WP_Ops\Media_Ops();
-		$this->_post = new WP_Ops\Post_Ops();
 		$this->_logger = new WP_Ops\Logger();
 	}
 
@@ -75,10 +74,16 @@ class WP_Ops {
 	}
 
 	/**
+	 * @param string $post_type
+	 *
 	 * @return \WP_Ops\Post_Ops
 	 */
-	static function post() {
-		return self::instance()->_post;
+	static function post( $post_type = 'any' ) {
+		$instance = self::instance();
+		if ( ! isset( $instance->_post[ $post_type ] ) ) {
+			$instance->_post[ $post_type ] = new \WP_Ops\Post_Ops( $post_type );
+		}
+		return $instance->_post[ $post_type ];
 	}
 
 	/**

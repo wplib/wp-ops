@@ -33,7 +33,7 @@ class Meta_Ops {
 	 * @return WP_Post[]|WP_Error[]
 	 */
 	function delete_all( $args = array() ) {
-		$this->delete_many( array(
+		return $this->delete_many( array(
 			'post_ids'    => null,
 			'user_ids'    => null,
 			'term_ids'    => null,

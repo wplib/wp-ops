@@ -161,10 +161,10 @@ class Post {
 				'meta_key'   => function () use ( $media ) { return $media->meta_key(); },
 				'meta_value' => function () use ( $media ) { return $media->uploads_filepath(); },
 			));
-			$meta_key = WP_Ops::get_arg( $args[ 'meta_key' ] );
+			$meta_key = Util::get_arg( $args[ 'meta_key' ] );
 			$meta = new Meta( 'post', $meta_key, "post_id={$this->_post_id}" );
 			$media->set_meta( $meta );
-			$meta->update( WP_Ops::get_arg( $args[ 'meta_value' ] ) );
+			$post->update( Util::get_arg( $args[ 'meta_value' ] ) );
 			WP_Ops::logger()->log(
 				"Added meta key [%s] to post %d.\n",
 				$meta_key,

@@ -353,7 +353,11 @@ class Media_Ops {
 			}
 
 			if ( $args[ 'alt' ] ) {
-				update_post_meta( $attachment_id, '_wp_attachment_image_alt', wp_slash( $args[ 'alt' ] ) );
+				update_post_meta(
+					$attachment_id,
+					'_wp_attachment_image_alt',
+					wp_slash( $args[ 'alt' ] )
+				);
 			}
 
 			/**

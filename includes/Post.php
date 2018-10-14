@@ -125,7 +125,7 @@ class Post {
 	 * @return Media
 	 */
 	function feature_media( $media, $args = array() ) {
-		$args = wp_parse_args( $args );
+		$args = Util::parse_args( $args );
 		$args[ 'featured-image' ] = true;
 		return $this->attach_media( $media, $args );
 	}
@@ -139,7 +139,7 @@ class Post {
 	function attach_media( $media, $args = array() ) {
 		$media = Media_Ops::normalize_media( $media );
 		$title = wp_strip_all_tags( $media->title() );
-		$args = wp_parse_args( $args, array(
+		$args = Util::parse_args( $args, array(
 			'title'             => $title,
 			'caption'           => $title,
 			'alt'               => $title,
@@ -157,7 +157,7 @@ class Post {
 	 */
 	function add_custom_media( $media, $args = array() )  {
 		do {
-			$args = wp_parse_args( $args, array(
+			$args = Util::parse_args( $args, array(
 				'meta_key'   => function () use ( $media ) { return $media->meta_key(); },
 				'meta_value' => function () use ( $media ) { return $media->uploads_filepath(); },
 			));
@@ -182,11 +182,11 @@ class Post {
 	 * @return mixed
 	 */
 	function associate_media( $type, $media, $args = array() ) {
-		$args = wp_parse_args( $args, array(
+		$args = Util::parse_args( $args, array(
 			'media_obj' => null,
 		));
 		$media->set_image_type( $type );
-		$args = wp_parse_args( $args );
+		$args = Util::parse_args( $args );
 		$media->set_parent_id( $this->_post_id );
 		switch ( $type ) {
 			default:

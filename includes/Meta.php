@@ -50,7 +50,7 @@ abstract class Meta {
 
 			$meta = null;
 
-			$args = wp_parse_args( $args, array(
+			$args = Util::parse_args( $args, array(
 			    'class_name' => __NAMESPACE__ . '\\' . ucfirst( $type ) . 'Meta',
 			));
 
@@ -84,7 +84,7 @@ abstract class Meta {
 		$this->_type      = Meta_Ops::sanitize_type( $type );
 		$this->_meta_key  = $meta_key;
 
-		$args = wp_parse_args( $args, array(
+		$args = Util::parse_args( $args, array(
 			'meta_id'    => null,
 			'object_id'  => null,
 			'meta_value' => null,

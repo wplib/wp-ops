@@ -49,4 +49,52 @@ class Util {
 			: null;
 	}
 
+	/**
+	 * @param array $args
+	 * @param null $defaults
+	 *
+	 * @return array|mixed
+	 */
+	static function parse_args( $args, $defaults = null ) {
+		if ( is_object( $args ) ) {
+			$args = get_object_vars( $args );
+		} elseif ( is_array( $args ) ) {
+			$args =& $args;
+		} else {
+			parse_str( $args, $args );
+			if ( get_magic_quotes_gpc() ) {
+				$args = self::map_deep( $args, function( $value ) {
+					return is_string( $value ) ? stripslashes( $value ) : $value;
+				});
+			}
+		}
+		if ( is_array( $defaults ) ) {
+			return array_merge( $defaults, $args );
+		}
+		return $args;
+	}
+
+	/**
+	 * @param array $value
+	 * @param callable $callback
+	 *
+	 * @return array
+	 */
+	static function map_deep( $value, $callback ) {
+		if ( is_array( $value ) ) {
+			foreach ( $value as $index => $item ) {
+				$value[ $index ] = map_deep( $item, $callback );
+			}
+		} elseif ( is_object( $value ) ) {
+			$object_vars = get_object_vars( $value );
+			foreach ( $object_vars as $property_name => $property_value ) {
+				$value->$property_name = map_deep( $property_value, $callback );
+			}
+		} else {
+			$value = call_user_func( $callback, $value );
+		}
+
+		return $value;
+	}
+
 }

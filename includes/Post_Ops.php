@@ -39,8 +39,8 @@ class Post_Ops {
 	 * @return WP_Post[]|WP_Error[]
 	 */
 	function delete_many( $query = array(), $args = array() ) {
-		$args = wp_parse_args( $args, array(
-			'truncate' => false,
+		$args = Util::parse_args( $args, array(
+			'truncate'  => false,
 			'force' => true,
 		));
 		$query[ 'fields' ] = 'ids';
@@ -60,7 +60,7 @@ class Post_Ops {
 	 * @return array
 	 */
 	function delete( $post, $args = array() ) {
-		$args = wp_parse_args($args, array(
+		$args = Util::parse_args($args, array(
 			'force' => false,
 		));
 		if ( is_int( $post ) ) {
@@ -77,7 +77,7 @@ class Post_Ops {
 	 * @return Post[]
 	 */
 	function list( $args = array() ) {
-		$args = wp_parse_args($args, array(
+		$args = Util::parse_args( $args, array(
 			'post_type'      => 'post',
 			'post_status'    => 'publish',
 			'posts_per_page' => -1,
@@ -108,7 +108,7 @@ class Post_Ops {
 	 * @return Post[]|WP_Error[]
 	 */
 	function create_from( $post_arr, $args = array() ) {
-		$args = wp_parse_args($args, array(
+		$args = Util::parse_args($args, array(
 			'truncate' => false,
 		));
 		if ( $args[ 'truncate' ] ) {
@@ -143,7 +143,7 @@ class Post_Ops {
 
 		$new_id = 1 + $wpdb->get_var( "SELECT MAX(ID) FROM {$wpdb->posts}" );
 
-		$args = wp_parse_args($args, array(
+		$args = Util::parse_args($args, array(
 			'post_type'    => 'post',
 			'post_status'  => 'draft',
 			'post_title'   => "Post #{$new_id}",

@@ -24,7 +24,7 @@ class Media extends Post {
 
 	function __construct( $filepath, $args = array() ) {
 		$this->_filepath = $filepath;
-		$args = wp_parse_args($args, $default_args = array(
+		$args = Util::parse_args($args, $default_args = array(
 			'parent_id'     => null,
 			'attachment_id' => null,
 			'image_type'    => null,

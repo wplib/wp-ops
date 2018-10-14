@@ -23,6 +23,7 @@ class Media_Ops {
 	private $_last_result;
 
 	function delete_images( $args = array() ) {
+		$args = Util::parse_args( $args );
 		$args[ 'images_only' ] = true;
 		return $this->_last_result = $this->delete_uploads( $args );
 	}
@@ -35,7 +36,7 @@ class Media_Ops {
 	}
 
 	function delete_many( $args = array() ) {
-		$args = wp_parse_args( $args, array(
+		$args = Util::parse_args( $args, array(
 			'path'         => '',
 			'uploads_only' => false,
 			'dirs_only'    => false,
@@ -63,8 +64,8 @@ class Media_Ops {
 	}
 
 	function delete_path( $path, $args = array() ) {
-		$args = wp_parse_args($args, array(
-			'images_only'    => false,
+		$args = Util::parse_args($args, array(
+			'images_only' => false,
 		));
 		$path = $this->_maybe_make_uploads_path_absolute( $path );
 		$iterator = new RecursiveDirectoryIterator( $path, RecursiveDirectoryIterator::SKIP_DOTS );
@@ -131,7 +132,7 @@ class Media_Ops {
 
 			$filepath = $this->_maybe_make_uploads_path_absolute( $filepath );
 
-			$args = wp_parse_args($args, array(
+			$args = Util::parse_args($args, array(
 				'type'       => 'png',
 				'height'     => 100,
 				'width'      => 100,
@@ -207,7 +208,7 @@ class Media_Ops {
 	 */
 	function import( $media, $args = array() ) {
 
-		$args = wp_parse_args( $args, array(
+		$args = Util::parse_args( $args, array(
 			'post_id'           => false,
 			'title'             => null,
 			'caption'           => null,

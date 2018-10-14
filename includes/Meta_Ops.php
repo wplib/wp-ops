@@ -47,8 +47,8 @@ class Meta_Ops {
 	 * @return WP_Post[]|WP_Error[]
 	 */
 	function delete_many( $query = array(), $args = array() ) {
-		$args = wp_parse_args( $args, array(
-			'truncate' => false,
+		$args = Util::parse_args( $args, array(
+			'truncate'       => false,
 		));
 		if ( $args[ 'truncate' ] ) {
 			DB_Ops::truncate_table( 'postmeta' );
@@ -65,14 +65,13 @@ class Meta_Ops {
 	 *
 	 * @return false|int
 	 */
-
 	function delete( $meta ) {
 		global $wpdb;
 		$meta = self::normalize_meta( $this->_type, $meta );
 		$where_sql = $wpdb->prepare( "AND meta_id=%d", $meta->meta_id() );
 		$sql = self::get_meta_sql( $this->_type, array(
 			'delete_sql' => 'DELETE',
-			'where_sql' => $where_sql,
+			'where_sql'  => $where_sql,
 		));
 		return $this->_last_result = $wpdb->query( $sql );
 	}
@@ -83,7 +82,7 @@ class Meta_Ops {
 	 */
 	function list( $args = array() ) {
 		global $wpdb;
-		$args = wp_parse_args($args, array(
+		$query = Util::parse_args($query, array(
 			'post_ids'    => null,
 			'user_ids'    => null,
 			'term_ids'    => null,
@@ -126,7 +125,7 @@ class Meta_Ops {
 
 	static function get_meta_sql( $type, $args = array() ) {
 		global $wpdb;
-		$args = wp_parse_args( $args, array_merge(
+		$args = Util::parse_args( $args, array_merge(
 			$prefix_args = array(
 				'update_sql' => null,
 				'insert_sql' => null,

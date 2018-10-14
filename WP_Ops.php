@@ -144,16 +144,4 @@ class WP_Ops {
 		return self::$_files_dir;
 	}
 
-	/**
-	 * @param callable|mixed $target
-	 * @param array $args
-	 *
-	 * @return mixed
-	 */
-	static function get_arg( $target, $args = array() ) {
-		return is_callable( $target )
-			? call_user_func_array( $target, $args )
-			: $target;
-	}
-
 }

@@ -10,7 +10,7 @@ class WP_Ops {
 	/**
 	 * @var string
 	 */
-	private static $_files_dir;
+	private static $_assets_dir;
 
 	/**
 	 * @var array
@@ -143,12 +143,12 @@ class WP_Ops {
 		return $data;
 	}
 
-	static function set_files_dir( $files_dir ) {
-		self::$_files_dir = $files_dir;
+	static function set_assets_dir( $assets_dir ) {
+		self::$_assets_dir = $assets_dir;
 	}
 
-	static function files_dir() {
-		return self::$_files_dir;
+	static function assets_dir() {
+		return self::$_assets_dir;
 	}
 
 }

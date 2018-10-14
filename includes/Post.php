@@ -137,7 +137,7 @@ class Post {
 	 * @return Media
 	 */
 	function attach_media( $media, $args = array() ) {
-		$media = WP_Ops::normalize_media( $media );
+		$media = Media_Ops::normalize_media( $media );
 		$title = wp_strip_all_tags( $media->title() );
 		$args = wp_parse_args( $args, array(
 			'title'             => $title,

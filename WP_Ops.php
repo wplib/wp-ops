@@ -100,26 +100,26 @@ class WP_Ops {
 	}
 
 	/**
-	 * Transforms 2d array into array of objects 
+	 * Transforms 2d array into array of objects
 	 *
 	 * Transforms an array of arrays where first sub-array (row) contains header names
 	 * and remaining sub-arrays (rows) get transformed into objects with headers as properties
-	 * 
+	 *
 	 * @example:
-	 *  
+	 *
 	 *      [
 	 *           [ 'foo', 'bar', 'baz' ],
 	 *           [ 1, 2, 3 ],
 	 *           [ 4, 5, 6 ],
 	 *      ]
-	 *      
+	 *
 	 *      Gets transformed into:
-	 * 
+	 *
 	 *      [
 	 *           (object)[ 'foo'=>1, 'bar'=>2, 'baz'=>3 ],
 	 *           (object)[ 'foo'=>4, 'bar'=>5, 'baz'=>6 ],
 	 *      ]
-	 * 
+	 *
 	 * @param array[] $data
 	 *
 	 * @return object[]
@@ -149,26 +149,6 @@ class WP_Ops {
 			$array[ $index ] = call_user_func( $callback, $element, $index );
 		}
 		return $array;
-	}
-
-	static function normalize_media( $media ) {
-		do {
-			global $wpdb;
-			if ( is_string( $media ) ) {
-				$media = new WP_Ops\Media( $media );
-				break;
-			}
-			if ( is_object( $media ) ) {
-				break;
-			}
-			if ( ! is_numeric( $media ) ) {
-				break;
-			}
-			$sql = "SELECT guid FROM {$wpdb->posts} WHERE post_type='attachment' AND ID=%d";
-			$filepath = $wpdb->get_var( $wpdb->prepare( $sql, $media ) );
-			$media = new WP_Ops\Media( $filepath );
-		} while ( false );
-		return $media;
 	}
 
 	/**

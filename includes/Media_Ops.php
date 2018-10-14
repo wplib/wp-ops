@@ -224,7 +224,7 @@ class Media_Ops {
 
 		do {
 
-			$media = WP_Ops::normalize_media( $media );
+			$media = self::normalize_media( $media );
 
 			$filepath = $media->filepath();
 
@@ -521,6 +521,26 @@ class Media_Ops {
 			$is_image_file = in_array( $result[ 2 ], self::IMAGE_TYPES );
 		} while ( false );
 		return $is_image_file;
+	}
+
+	static function normalize_media( $media ) {
+		do {
+			global $wpdb;
+			if ( is_string( $media ) ) {
+				$media = new WP_Ops\Media( $media );
+				break;
+			}
+			if ( is_object( $media ) ) {
+				break;
+			}
+			if ( ! is_numeric( $media ) ) {
+				break;
+			}
+			$sql = "SELECT guid FROM {$wpdb->posts} WHERE post_type='attachment' AND ID=%d";
+			$filepath = $wpdb->get_var( $wpdb->prepare( $sql, $media ) );
+			$media = new WP_Ops\Media( $filepath );
+		} while ( false );
+		return $media;
 	}
 
 }

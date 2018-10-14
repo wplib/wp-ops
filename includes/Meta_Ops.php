@@ -51,6 +51,15 @@ class Meta_Ops {
 			'truncate'    => false,
 			'reset'       => false,
 		));
+		/**
+		 * When 'post_exists' is false then delete meta
+		 * only for posts that do NOT exist.
+		 */
+		$args[ 'post_exists' ] = false;
+		$results = array();
+		foreach( $this->list( $query, $args ) as $meta ) {
+			$results[ $meta->meta_id() ] = $this->delete( $meta );
+		}
 		if ( $args[ 'truncate' ] ) {
 			DB_Ops::truncate_table( 'postmeta' );
 		}
@@ -93,6 +102,9 @@ class Meta_Ops {
 			'term_ids'    => null,
 			'comment_ids' => null,
 		));
+		$args = Util::parse_args( $args, array(
+			'post_exists' => null,
+		));
 
 		$where_sql = '';
 		foreach( self::valid_types() as $valid_type ) {
@@ -104,6 +116,13 @@ class Meta_Ops {
 				: array( intval( $query[ "{$valid_type}_ids" ] ) );
 
 			$where_sql = ' AND {$valid_type}_id IN (' . implode( ',', $object_ids ) . ')';
+			if ( ! is_null( $args[ 'post_exists' ] ) {
+				$table = "{$valid_type}s";
+				$table = $wpdb->{$table};
+				$where_sql .= $args[ 'post_exists' ]
+					? ' AND (post_id IN (SELECT ID FROM {$table}))'
+					: ' AND (post_id NOT IN (SELECT ID FROM {$table}))';
+			}
 			break;
 		}
 		$results = $wpdb->get_results( self::get_meta_sql(

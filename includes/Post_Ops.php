@@ -45,7 +45,8 @@ class Post_Ops {
 	function delete_many( $query = array(), $args = array() ) {
 		$args = Util::parse_args( $args, array(
 			'truncate'  => false,
-			'force' => true,
+			'reset'     => false,
+			'force'     => true,
 		));
 		$query[ 'fields' ] = 'ids';
 		$results = array();
@@ -54,6 +55,9 @@ class Post_Ops {
 		}
 		if ( $args[ 'truncate' ] ) {
 			DB_Ops::truncate_table( 'posts' );
+		}
+		if ( $args[ 'reset' ] ) {
+			DB_Ops::reset_auto_increment( 'posts' );
 		}
 		return $this->_last_result = $results;
 	}

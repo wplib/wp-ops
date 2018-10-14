@@ -48,14 +48,14 @@ class Meta_Ops {
 	 */
 	function delete_many( $query = array(), $args = array() ) {
 		$args = Util::parse_args( $args, array(
-			'truncate'       => false,
+			'truncate'    => false,
+			'reset'       => false,
 		));
 		if ( $args[ 'truncate' ] ) {
 			DB_Ops::truncate_table( 'postmeta' );
 		}
-		$results = array();
-		foreach( $this->list( $query ) as $meta ) {
-			$results[ $meta->meta_id() ] = $this->delete( $meta );
+		if ( $args[ 'reset' ] ) {
+			DB_Ops::reset_auto_increment( 'postmeta' );
 		}
 		return $this->_last_result = $results;
 	}

@@ -144,13 +144,6 @@ class WP_Ops {
 		return self::$_files_dir;
 	}
 
-	static function foreach( $array, $callback ) {
-		foreach( $array as $index => $element ) {
-			$array[ $index ] = call_user_func( $callback, $element, $index );
-		}
-		return $array;
-	}
-
 	/**
 	 * @param callable|mixed $target
 	 * @param array $args

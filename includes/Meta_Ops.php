@@ -77,10 +77,15 @@ class Meta_Ops {
 	}
 
 	/**
-	 * @param array $args
+	 * @param array $query
+	 * @param array $args {
+	 *      @type bool $post_exists When true-ish then only meta for posts that DO exist.
+	 *                              When false-ish then only meta for posts that do NOT exist.
+	 *                              When null then all meta.
+	 * }
 	 * @return WP_Post[]|WP_Error[]
 	 */
-	function list( $args = array() ) {
+	function list( $query = array(), $args = array() ) {
 		global $wpdb;
 		$query = Util::parse_args( $query, array(
 			'post_ids'    => null,

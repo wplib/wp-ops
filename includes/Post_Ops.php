@@ -109,7 +109,7 @@ class Post_Ops {
 	 */
 	function create_from( $post_arr, $args = array() ) {
 		$args = wp_parse_args($args, array(
-			'truncate' => true,
+			'truncate' => false,
 		));
 		if ( $args[ 'truncate' ] ) {
 			DB_Ops::truncate_table( 'posts' );

@@ -128,6 +128,7 @@ In lieu of more detailed docs awaiting time to better document, here is an examp
      */
     WP_Ops::post()->associate_media_from( $this->post_images(), $posts, $images );
 
+### Example Data
 The prior mentioned PHPUnit test also contains these following methods to provide 
 the data used by the prior code: 
 

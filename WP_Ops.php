@@ -61,11 +61,17 @@ class WP_Ops {
 	private $_meta;
 
 	/**
+	 * @var \WP_Ops\DB_Ops[]
+	 */
+	private $_db;
+
+	/**
 	 * @var \WP_Ops\Logger
 	 */
 	private $_logger;
 
 	function __construct() {
+		$this->_db = new WP_Ops\DB_Ops();
 		$this->_media = new WP_Ops\Media_Ops();
 		$this->_logger = new WP_Ops\Logger();
 	}
@@ -132,6 +138,13 @@ class WP_Ops {
 			$instance->_meta[ $meta_type ] = new \WP_Ops\Meta_Ops( $meta_type );
 		}
 		return $instance->_meta[ $meta_type ];
+	}
+
+	/**
+	 * @return \WP_Ops\DB_Ops
+	 */
+	static function db() {
+		return self::instance()->_db;
 	}
 
 	/**

@@ -7,19 +7,19 @@ class DB_Ops {
 	/**
 	 * @var Error
 	 */
-	private static $_last_error;
+	private $_last_error;
 
 	/**
 	 * @return Error
 	 */
-	static function last_error() {
-		return self::$_last_error;
+	function last_error() {
+		return $this->_last_error;
 	}
 
 	/**
 	 * @param string $table
 	 */
-	static function truncate_table( $table ) {
+	function truncate_table( $table ) {
 		global $wpdb;
 		$table = $wpdb->{$table};
 		$wpdb->query( "TRUNCATE TABLE {$table}" );
@@ -28,7 +28,7 @@ class DB_Ops {
 	/**
 	 * @param string $table
 	 */
-	static function reset_auto_increment( $table ) {
+	function reset_auto_increment( $table ) {
 		return self::set_auto_increment( $table, 1 );
 	}
 

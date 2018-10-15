@@ -54,10 +54,10 @@ class Post_Ops {
 			$results[ $post->post_id() ] = $this->delete( $post, $args );
 		}
 		if ( $args[ 'truncate' ] ) {
-			DB_Ops::truncate_table( 'posts' );
+			WP_Ops::db()->truncate_table( 'posts' );
 		}
 		if ( $args[ 'reset' ] ) {
-			DB_Ops::reset_auto_increment( 'posts' );
+			WP_Ops::db()->reset_auto_increment( 'posts' );
 		}
 		return $this->_last_result = $results;
 	}
@@ -120,7 +120,7 @@ class Post_Ops {
 			'truncate' => false,
 		));
 		if ( $args[ 'truncate' ] ) {
-			DB_Ops::truncate_table( 'posts' );
+			WP_Ops::db()->truncate_table( 'posts' );
 		}
 		$assets_dir = WP_Ops::assets_dir();
 		$post_objs = WP_Ops::transform_test_data( $post_arr );

@@ -61,10 +61,10 @@ class Meta_Ops {
 			$results[ $meta->meta_id() ] = $this->delete( $meta );
 		}
 		if ( $args[ 'truncate' ] ) {
-			DB_Ops::truncate_table( 'postmeta' );
+			WP_Ops::db()->truncate_table( 'postmeta' );
 		}
 		if ( $args[ 'reset' ] ) {
-			DB_Ops::reset_auto_increment( 'postmeta' );
+			WP_Ops::db()->reset_auto_increment( 'postmeta' );
 		}
 		return $this->_last_result = $results;
 	}

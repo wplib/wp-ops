@@ -116,7 +116,7 @@ class Meta_Ops {
 				: array( intval( $query[ "{$valid_type}_ids" ] ) );
 
 			$where_sql = ' AND {$valid_type}_id IN (' . implode( ',', $object_ids ) . ')';
-			if ( ! is_null( $args[ 'post_exists' ] ) {
+			if ( ! is_null( $args[ 'post_exists' ] ) ) {
 				$table = "{$valid_type}s";
 				$table = $wpdb->{$table};
 				$where_sql .= $args[ 'post_exists' ]

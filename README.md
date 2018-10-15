@@ -1,10 +1,16 @@
-# wp-ops
-WordPress Operations Library with semantics similar to WP CLI
+# WP_Ops
+**WordPress Operations Library similar semantics to WP CLI**
 
-Since WP CLI will [never be a library](https://github.com/wp-cli/wp-cli/issues/1924#issuecomment-122085331) you can program at the PHP level, 
-you can use this library for both 1.) setup for automated testing and 2.) site database initialization.
+This library is for the creation of simple PHP scripts that can be used to initialize WordPress databases for:
 
-_**Note**_: We have only implement those aspects we need to date, but **pull requests are welcome**. Or you can [**hire us**](mailto:team@wplib.org) to add more functionality.
+1. Setup for automated testing, and 
+2. New and/or updated website deployments
+
+## Rationale
+Since WP CLI will [never be a library](https://github.com/wp-cli/wp-cli/issues/1924#issuecomment-122085331) and it is a pain to setup and call WP CLI from a PHPUnit script or to trigger WP CLI via web host we decided to create an easy to use library for doing similar tasks.
+
+## Status
+We have only implement the functionality we have needed to date, but **pull requests** for additional features will be considered. Or you can [**hire us**](mailto:team@wplib.org) to add more functionality.
 
 ## Setup for Automated Testing
 
@@ -252,6 +258,6 @@ class also contains these following methods to provide data used the prior code:
         );
     }
 
-## Site Database Initialization
+## New and/or updated website deployments
 
 More to come here...

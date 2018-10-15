@@ -14,7 +14,7 @@ We have only implement the functionality we have needed to date, but **pull requ
 
 ## Setup for Automated Testing
 
-In lieu of more detailed docs awaiting time to better document, here is an example with detailed comments:
+In lieu of more detailed docs awaiting time to better document, here is an example with detailed comments. This code is being used in the `setUp()` method for a PHPUnit test:
 
     /**
      * Set the directory where post content can be found.
@@ -128,8 +128,8 @@ In lieu of more detailed docs awaiting time to better document, here is an examp
      */
     WP_Ops::post()->associate_media_from( $this->post_images(), $posts, $images );
 
-The above example is run in the `setUp()` method for a PHPUnit test and that test   
-class also contains these following methods to provide data used the prior code: 
+The prior mentioned PHPUnit test also contains these following methods to provide 
+the data used by the prior code: 
 
     /** 
      * @return array[]

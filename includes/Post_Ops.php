@@ -10,7 +10,7 @@ use WP_Ops;
 class Post_Ops {
 
 	/**
-	 * @var string
+	 * @var string|string[]
 	 */
 	private $_post_type = 'any';
 
@@ -19,6 +19,11 @@ class Post_Ops {
 	 */
 	private $_last_result;
 
+	/**
+	 * Post_Ops constructor.
+	 *
+	 * @param string|string[] $post_type
+	 */
 	function __construct( $post_type = 'any' ) {
 		$this->_post_type = $post_type;
 	}
@@ -39,7 +44,9 @@ class Post_Ops {
 	 */
 	function delete_many( $query = array(), $args = array() ) {
 		$query = Util::parse_args( $query, array(
-			'post_type'      => [ $this->_post_type, 'revision' ],
+			'post_type'      => is_array( $this->_post_type )
+				? array_merge( $this->_post_type, [ 'revision' ] )
+				: [ $this->_post_type, 'revision' ],
 			'post_status'    => [ 'publish', 'trash', 'auto-draft', 'inherit' ],
 			'posts_per_page' => - 1,
 		));
@@ -185,15 +192,28 @@ class Post_Ops {
 		$results = array();
 		$post_media = WP_Ops::transform_test_data( $post_media );
 		foreach( $post_media as $media_obj ) {
-			if ( ! isset( $posts[ $slug = $media_obj->post_slug ] ) ) {
-				continue;
-			}
 			$media_path = preg_replace(
 				'#^(.+)(-\d{2,4}x\d{2,4})(\.[a-z]{3,10})$#',
 				'$1$3',
 				$media_obj->media_path
 			);
+			if ( ! isset( $posts[ $slug = $media_obj->post_slug ] ) ) {
+				WP_Ops::logger()->log( "\nNOTE: Post '%s' not found when attempting to associate media [%s] as '%s'.\n\n",
+					$slug,
+					$media_path,
+					$type
+				);
+				continue;
+			}
 			if ( ! isset( $media_items[ $media_path ] ) ) {
+				$media_path = ltrim( WP_Ops::media()->extract_uploads_path( $media_path ), '/' );
+			}
+			if ( ! isset( $media_items[ $media_path ] ) ) {
+				WP_Ops::logger()->log( "NOTE: Media [%s] not found when attempting to associate to post '%s' as '%s'.\n",
+					$media_path,
+					$slug,
+					$type
+				);
 				continue;
 			}
 			$post = $posts[ $slug ];
@@ -205,6 +225,7 @@ class Post_Ops {
 			));
 			$media->set_parent_id( $post->post_id() );
 			$results[ $type ][ $key ] = $media;
+
 		}
 		return $results;
 	}
@@ -235,6 +256,10 @@ class Post_Ops {
 			case 'guid':
 				$sql = "SELECT ID FROM {$wpdb->posts} WHERE {$by}=%s";
 				$post_ids = $wpdb->get_col( $wpdb->prepare( $sql, $lookup_value ) );
+				break;
+			case 'attached_file':
+				$sql = "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key='_wp_attached_file' AND meta_value=%s";
+				$post_ids = $wpdb->get_col( $wpdb->prepare( $sql, ltrim( $lookup_value, '/' ) ) );
 				break;
 		}
 		$posts = array();

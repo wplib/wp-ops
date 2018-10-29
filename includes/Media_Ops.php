@@ -12,6 +12,9 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
 class Media_Ops {
+	const URL_ATTACH_TYPE = 'url';
+	const FILE_ATTACH_TYPE = 'file';
+
 	const IMAGE_TYPES = array(
 		IMAGETYPE_GIF,
 		IMAGETYPE_JPEG,
@@ -243,10 +246,10 @@ class Media_Ops {
 	 * @param array $args
 	 * @return Media[]
 	 */
-	function import_many( $medias, $args = array() ) {
+	function attach_many( $medias, $args = array() ) {
 		$results = array();
 		foreach( $medias as $media ) {
-			$media = $this->import( $media, $args );
+			$media = $this->attach( $media, $args );
 			$results[ $media->uploads_filepath() ] = $media;
 		}
 		return $results;
@@ -256,55 +259,163 @@ class Media_Ops {
 	 * @param Media|string $media
 	 * @param array $args
 	 */
-	function import( $media, $args = array() ) {
-
-		$args = Util::parse_args( $args, array(
-			'post_id'           => false,
-			'title'             => null,
-			'caption'           => null,
-			'alt'               => null,
-			'desc'              => null,
-			'skip-copy'         => false,
-			'preserve-filetime' => false,
-			'featured-image'    => false,
-		));
-
-		if ( $args[ 'post_id' ] && ! get_post( $args[ 'post_id' ] ) ) {
-			WP_Ops::add_error( 'Invalid post_id. Cannot import.' );
-		}
+	function attach( $media, $args = array() ) {
 
 		do {
 
-			$media = self::normalize_media( $media );
+			$args = Util::parse_args( $args, array(
+				'post_id'           => false,
+				'featured_image'    => false,
+				'log_status'        => true,
+				'post_slug'         => null,
+				'attach_type'       => Media_Ops::FILE_ATTACH_TYPE,
+			));
+
+			if ( $args[ 'post_id' ] && ! get_post( $args[ 'post_id' ] ) ) {
+				WP_Ops::logger()->log( 'Invalid post_id. Cannot import.' );
+				break;
+			}
+
+			$media = $this->normalize_media( $media );
+
+			switch ( $args[ 'attach_type' ] ) {
+				case Media_Ops::FILE_ATTACH_TYPE:
+					$attachments = WP_Ops::post()->find_by( 'guid', $media->url() );
+					break;
+				case Media_Ops::URL_ATTACH_TYPE:
+					$attachments = WP_Ops::post()->find_by( 'attached_file', $media->uploads_filepath() );
+					$regex = '#^' . preg_quote( $this->get_uploads_baseurl() ) . '#';
+					foreach( $attachments as $index => $attachment ) {
+						if ( ! $attachment = get_post( $attachment->post_id() ) ) {
+							continue;
+						}
+						if ( ! preg_match( $regex, $attachment->guid ) ) {
+							/**
+							 * Attachments web page URLs should not match
+							 * the base uploads URL so keep them
+							 */
+							continue;
+						}
+						/**
+						 * For URLs that DO match the base base uploads URL
+						 * they are Media_Ops::FILE_ATTACH_TYPE so remove.
+						 */
+						unset( $attachments[ $index ] );
+					}
+					break;
+			}
+
+			if ( 0 < count( $attachments ) ) {
+				WP_Ops::logger()->log(
+					"NOTE: Media [%s] already as attached as attachment ID %d.\n",
+					$media->uploads_filepath(),
+					$attachment_id = key( $attachments )
+				);
+			} else if ( is_null( $attachment_id = $this->insert_attachment( $media, $args ) ) ) {
+				break;
+			}
+
+			$media->set_attachment_id( $attachment_id );
+
+			/**
+			 * Set as featured image
+			 */
+			do {
+
+				if ( ! $args[ 'post_id' ] ) {
+					break;
+				}
+				if ( ! $args[ 'featured_image' ] ) {
+					break;
+				}
+				update_post_meta( $args['post_id'], '_thumbnail_id', $attachment_id );
+
+			} while ( false );
+
+			if ( $args[ 'log_status' ] ) {
+
+				$message = "Attachment ID %d";
+				if ( $args[ 'post_id' ] ) {
+					$message .= sprintf( " for post ID %d", $args[ 'post_id' ] );
+					$message .= $args[ 'featured_image' ]
+						? ' set to featured image [%s]'
+						: ' attached image [%s]';
+					$message .= sprintf( " (post slug is '%s')", $args[ 'post_slug' ] );
+
+				}
+				WP_Ops::logger()->log( "{$message}.\n", $attachment_id, $media->uploads_filepath() );
+
+			}
+
+		} while ( false );
+
+		return $this->_last_result = $media;
+
+	}
+
+	/**
+	 * @param Media|string $media
+	 * @param array $args
+	 * @return int|null
+	 */
+	function insert_attachment( $media, $args = array() ) {
+
+		do {
+
+			$attachment_id = null;
+
+			$args = Util::parse_args( $args, array(
+				'post_id'           => false,
+				'title'             => null,
+				'caption'           => null,
+				'alt'               => null,
+				'desc'              => null,
+				'attach_type'       => Media_Ops::FILE_ATTACH_TYPE,
+				'preserve_filetime' => false,
+				'prefer_exif'       => false,
+			));
+
+			if ( $args[ 'post_id' ] && ! get_post( $args[ 'post_id' ] ) ) {
+				WP_Ops::logger()->log( 'Invalid post_id. Cannot import.' );
+				break;
+			}
 
 			$filepath = $media->filepath();
 
 			if ( ! is_file( $filepath ) ) {
-				WP_Ops::add_error( sprintf(
-					"File '%s' does not exist. Cannot import.",
-					$filepath
-				));
-				continue;
+				WP_Ops::logger()->log(  "File '%s' does not exist. Cannot import.", $filepath );
+				break;
 			}
 
-			$temp_file = ! $args[ 'skip-copy' ]
-				? $this->_copy_file( $filepath )
-				: $filepath;
-
-			$file_time = $args[ 'preserve-filetime' ]
+			$file_time = $args[ 'preserve_filetime' ]
 				? @filemtime( $filepath )
 				: null;
-
-			$file_arr = array(
-				'tmp_name' => $temp_file,
-				'name'     => $this->_basename( $filepath ),
-			);
 
 			$post_arr = array(
 				'post_title'   => $args[ 'title' ],
 				'post_excerpt' => $args[ 'caption' ],
 				'post_content' => $args[ 'desc' ],
 			);
+
+			/**
+			 * Extract image exif/iptc data for title and caption
+			 */
+			list( $title, $excerpt ) = $this->_extract_title_excerpt( $filepath, $post_arr );
+			if ( $args[ 'prefer_exif' ] ) {
+				if ( ! empty ( $title ) ) {
+					$post_arr[ 'post_title' ] = $title;
+				}
+				if ( ! empty ( $excerpt ) ) {
+					$post_arr[ 'post_excerpt' ] = $excerpt;
+				}
+			} else {
+				if ( empty ( $post_arr[ 'post_title' ] ) ) {
+					$post_arr[ 'post_title' ] = $title;
+				}
+				if ( empty ( $post_arr[ 'post_excerpt' ] ) ) {
+					$post_arr[ 'post_excerpt' ] = $excerpt;
+				}
+			}
 
 			if ( ! is_null( $file_time ) ) {
 				$gmt_offset = get_option( 'gmt_offset' ) * HOUR_IN_SECONDS;
@@ -320,87 +431,29 @@ class Media_Ops {
 
 			$post_arr = wp_slash( $post_arr );
 
-			/**
-			 * Use image exif/iptc data for title and caption
-			 */
-			do {
-
-				if ( ! $post_arr[ 'post_title' ] && ! empty( $post_arr[ 'post_excerpt' ] ) ) {
-					break;
-				}
-
-				$image_meta = @wp_read_image_metadata( $temp_file );
-
-				if ( empty( $image_meta ) ) {
-					break;
-				}
-
-				foreach( [ 'title:post_title', 'caption:post_excerpt' ] as $fields ) {
-					list( $image_field, $post_field ) = explode( ':', $fields );
-					if ( ! empty( $post_arr[ $post_field ] ) ) {
-						continue;
-					}
-					if ( empty( $image_meta[ $image_field ] ) ) {
-						continue;
-					}
-					$post_arr[ $post_field ] = $image_meta[ $image_field ];
-				}
-
-			} while ( false );
-
-			if ( empty( $post_array[ 'post_title' ] ) ) {
-				$post_array[ 'post_title' ] = preg_replace( '/\.[^.]+$/', '', $this->_basename( $filepath ) );
+			if ( empty( $post_arr[ 'post_title' ] ) ) {
+				$post_arr[ 'post_title' ] = preg_replace( '/\.[^.]+$/', '', $this->_basename( $filepath ) );
 			}
 
 			/**
 			 * Import the attachment
 			 */
-			do {
-
-				$error_msg = null;
-
-				if ( ! $args[ 'skip-copy' ] ) {
-
-					$attachment_id = media_handle_sideload(
-						$file_arr,
+			switch ( $args[ 'attach_type' ] ) {
+				case Media_Ops::FILE_ATTACH_TYPE:
+					$attachment_id = $this->_insert_attachment_as_file(
+						$media,
 						$args[ 'post_id' ],
-						$args[ 'title' ],
 						$post_arr
 					);
-
-					if ( is_wp_error( $attachment_id ) ) {
-						$error_msg = "Unable to import file '%s'. Reason: %s";
-					}
 					break;
 
-				}
-
-				$wp_filetype = wp_check_filetype( $filepath, null );
-				$post_arr[ 'post_mime_type' ] = $wp_filetype[ 'type' ];
-				$post_arr[ 'post_status' ] = 'inherit';
-
-				$attachment_id = wp_insert_attachment( $post_arr, $filepath, $args[ 'post_id' ] );
-				if ( is_wp_error( $attachment_id ) ) {
-					$error_msg = "Unable to insert file '%s'. Reason: %s";
+				case Media_Ops::URL_ATTACH_TYPE:
+					$attachment_id = $this->_insert_attachment_as_url(
+						$media,
+						$args[ 'post_id' ],
+						$post_arr
+					);
 					break;
-				}
-
-				wp_update_attachment_metadata(
-					$attachment_id,
-					wp_generate_attachment_metadata( $attachment_id, $filepath )
-				);
-
-			} while ( false );
-
-			if ( empty( $error_msg ) ) {
-				$media->set_attachment_id( $attachment_id );
-			} else {
-				WP_Ops::add_error( sprintf(
-					$error_msg,
-					$filepath,
-					implode( ', ', $result->get_error_messages() )
-				));
-				continue;
 			}
 
 			if ( $args[ 'alt' ] ) {
@@ -411,36 +464,158 @@ class Media_Ops {
 				);
 			}
 
-			/**
-			 * Set as featured image
-			 */
-			do {
-				if ( ! $args[ 'post_id' ] ) {
-					break;
-				}
-				if ( ! $args[ 'featured-image' ] ) {
-					break;
-				}
-				update_post_meta( $args['post_id'], '_thumbnail_id', $attachment_id );
-			} while ( false );
+		} while ( false );
 
-			$message = "Imported file [%s] as attachment ID %d";
-			if ( $args['post_id'] ) {
-				$message .= sprintf( " and attached to post %d", $args[ 'post_id' ] );
-				if ( $args[ 'featured-image' ] ) {
-					$message .= ' as featured image';
-				}
+
+		return $this->_last_result = $attachment_id;
+
+	}
+
+	/**
+	 * Attaches media as a URL, e.g. guid = URL is a web page for the attachment
+	 *
+	 * @param Media $media
+	 * @param int $post_id
+	 * @param array $post_arr
+	 *
+	 * @return int|null
+	 */
+	private function _insert_attachment_as_url( $media, $parent_id, $post_arr ) {
+		do {
+			$filepath = $media->filepath();
+
+			$wp_filetype = wp_check_filetype( $filepath, null );
+			$post_arr[ 'post_mime_type' ] = $wp_filetype[ 'type' ];
+			$post_arr[ 'post_status' ] = 'inherit';
+
+			$attachment_id = wp_insert_attachment( $post_arr, $filepath, $parent_id );
+			if ( is_wp_error( $attachment_id ) ) {
+				WP_Ops::logger()->log(
+					"Unable to insert file '%s'. Reason: %s",
+					$filepath,
+					implode( ', ', $attachment_id->get_error_messages() )
+				);
+				$attachment_id = null;
+				break;
 			}
 
-			$media = new Media( $filepath );
-			WP_Ops::logger()->log(
-				"{$message}.\n",
-				$media->uploads_filepath(),
-				$attachment_id
+			wp_update_attachment_metadata(
+				$attachment_id,
+				wp_generate_attachment_metadata( $attachment_id, $filepath )
 			);
 
 		} while ( false );
-		return $this->_last_result = $media;
+
+		return $this->_last_result = $attachment_id;
+
+	}
+
+	/**
+	 * Attaches media as a file, e.g. guid = actual file URL
+	 *
+	 * @param Media $media
+	 * @param int $post_id
+	 * @param array $post_arr
+	 * @param array $args {
+	 *      @type bool $new_filename
+	 * }
+	 *
+	 * @return int|null
+	 */
+	private function _insert_attachment_as_file( $media, $parent_id, $post_arr, $args = array() ) {
+		do {
+			$attachment_id = null;
+
+			$args = wp_parse_args( $args, array(
+				'skip_copy'   => false,
+				'new_filename' => false,
+			));
+
+			$filepath = $media->filepath();
+
+			$temp_file = ! $args[ 'skip_copy' ]
+				? $this->_copy_file( $filepath )
+				: $filepath;
+
+			$file_arr = array(
+				'tmp_name' => $temp_file,
+				'name'     => $this->_basename( $filepath ),
+			);
+
+			if ( ! $args[ 'new_filename' ] ) {
+				add_filter( 'upload_dir', $hook1 = function ( $uploads_dir ) use ( $media ) {
+					$uploads_dir[ 'path' ]   = $media->dirpath();
+					$uploads_dir[ 'url' ]    = $media->url_path();
+					$uploads_dir[ 'subdir' ] = preg_replace(
+						'#^' . preg_quote( $uploads_dir[ 'baseurl' ] ) . '(.+)$#',
+						'$1',
+						$media->url_path()
+					);
+
+					return $uploads_dir;
+				} );
+
+				add_filter( 'wp_unique_filename', $hook2 = function ( $filename ) use ( $media ) {
+					return $media->basename();
+				} );
+			}
+
+			$attachment_id = media_handle_sideload(
+				$file_arr,
+				$parent_id,
+				$post_arr[ 'post_title' ],
+				$post_arr
+			);
+
+			if ( ! $args[ 'new_filename' ] ) {
+				remove_filter( 'wp_unique_filename', $hook2 );
+				remove_filter( 'upload_dir', $hook1 );
+			}
+
+			if ( is_wp_error( $attachment_id ) ) {
+				WP_Ops::logger()->log(
+					"Unable to import file '%s'. Reason: %s",
+					$media->filepath(),
+					implode( ', ', $attachment_id->get_error_messages() )
+				);
+				$attachment_id = null;
+				break;
+			}
+
+		} while ( false );
+		return $attachment_id;
+	}
+
+	/**
+	 * Use image exif/iptc data for title and caption
+	 *
+	 * @param string $filepath
+	 * @param array $post_arr
+	 * @return array[]
+	 */
+	function _extract_title_excerpt( $filepath, $post_arr ) {
+		do {
+			$post_arr = wp_parse_args( $post_arr, array(
+				'post_title'   => null,
+				'post_excerpt' => null,
+			));
+
+			$image_meta = @wp_read_image_metadata( $filepath );
+
+			if ( empty( $image_meta ) ) {
+				break;
+			}
+
+			$title = empty( $image_meta[ 'title' ] )
+				? $post_arr[ 'post_title' ]
+				: $image_meta[ 'title' ];
+
+			$caption = empty( $image_meta[ 'caption' ] )
+				? $post_arr[ 'post_excerpt' ]
+				: $image_meta[ 'caption' ];
+
+		} while ( false );
+		return [ $title, $caption ];
 	}
 
 	/**
@@ -487,7 +662,7 @@ class Media_Ops {
 		$ext = pathinfo( $filepath, PATHINFO_EXTENSION );
 		$temp_file = dirname( $temp_file ) . $this->_basename( $temp_file, 'tmp' ) . ".{$ext}";
 		if ( ! copy( $filepath, $temp_file ) ) {
-			WP_Ops::add_error( sprintf( 'Could not create temporary file in for %s.', $filepath ) );
+			WP_Ops::logger()->log( 'Could not create temporary file in for %s.', $filepath );
 		}
 		return $temp_file;
 	}
@@ -578,11 +753,16 @@ class Media_Ops {
 		return $is_image_file;
 	}
 
-	static function normalize_media( $media ) {
+	/**
+	 * @param Media $media
+	 *
+	 * @return Media
+	 */
+	function normalize_media( $media ) {
 		do {
 			global $wpdb;
 			if ( is_string( $media ) ) {
-				$media = new WP_Ops\Media( $media );
+				$media = new Media( $media );
 				break;
 			}
 			if ( is_object( $media ) ) {
@@ -593,10 +773,45 @@ class Media_Ops {
 			}
 			$sql = "SELECT guid FROM {$wpdb->posts} WHERE post_type='attachment' AND ID=%d";
 			$filepath = $wpdb->get_var( $wpdb->prepare( $sql, $media ) );
-			$media = new WP_Ops\Media( $filepath );
+			$media = new Media( $filepath );
 		} while ( false );
 		return $media;
 	}
+
+	/**
+	 * @param string $url
+	 *
+	 * @return string|null
+	 */
+	function extract_uploads_path( $url ) {
+		$regex = '#^' . preg_quote( $this->base_uploads_url() ) . '(.+)$#';
+		$regex = preg_replace( '~#\^https?\\\\://~', '#^https?\\://', $regex );
+		return preg_match( $regex, $url, $match )
+			? $match[ 1 ]
+			: null;
+	}
+
+	/**
+	 * @return string
+	 */
+	function base_uploads_url() {
+		return $this->get_base_uploads_url( '' );
+	}
+
+	/**
+	 * @param string $path
+	 *
+	 * @return string
+	 */
+	function get_base_uploads_url( $path ) {
+		$uploads_dir = wp_upload_dir();
+		$path = ! empty( $path )
+			? '/' . ltrim( $path, '/' )
+			: '';
+		return "{$uploads_dir[ 'baseurl' ]}{$path}";
+	}
+
+
 
 }
 

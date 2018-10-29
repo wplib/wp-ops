@@ -41,11 +41,6 @@ class WP_Ops {
 	private static $_assets_dir;
 
 	/**
-	 * @var array
-	 */
-	private static $_errors = array();
-
-	/**
 	 * @var \WP_Ops\Post_Ops
 	 */
 	private $_post;
@@ -66,12 +61,18 @@ class WP_Ops {
 	private $_db;
 
 	/**
+	 * @var \WP_Ops\Option_Ops[]
+	 */
+	private $_option;
+
+	/**
 	 * @var \WP_Ops\Logger
 	 */
 	private $_logger;
 
 	function __construct() {
 		$this->_db = new WP_Ops\DB_Ops();
+		$this->_option = new WP_Ops\Option_Ops();
 		$this->_media = new WP_Ops\Media_Ops();
 		$this->_logger = new WP_Ops\Logger();
 	}
@@ -81,13 +82,6 @@ class WP_Ops {
 	 */
 	static function log( $message ) {
 		self::logger()->log( $message );
-	}
-
-	/**
-	 * @param $error
-	 */
-	static function add_error( $error ) {
-		self::$_errors[] = $error;
 	}
 
 	/**
@@ -108,16 +102,22 @@ class WP_Ops {
 	}
 
 	/**
-	 * @param string $post_type
+	 * @param string\string[] $post_type
 	 *
 	 * @return \WP_Ops\Post_Ops
 	 */
 	static function post( $post_type = 'any' ) {
 		$instance = self::instance();
-		if ( ! isset( $instance->_post[ $post_type ] ) ) {
-			$instance->_post[ $post_type ] = new \WP_Ops\Post_Ops( $post_type );
+		if ( is_array( $post_type ) ) {
+			sort( $post_type );
 		}
-		return $instance->_post[ $post_type ];
+		$post_type_key = is_array( $post_type )
+			? implode( '|', $post_type )
+			: $post_type;
+		if ( ! isset( $instance->_post[ $post_type_key ] ) ) {
+			$instance->_post[ $post_type_key ] = new \WP_Ops\Post_Ops( $post_type );
+		}
+		return $instance->_post[ $post_type_key ];
 	}
 
 	/**
@@ -145,6 +145,13 @@ class WP_Ops {
 	 */
 	static function db() {
 		return self::instance()->_db;
+	}
+
+	/**
+	 * @return \WP_Ops\Option_Ops
+	 */
+	static function option() {
+		return self::instance()->_option;
 	}
 
 	/**

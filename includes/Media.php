@@ -58,8 +58,25 @@ class Media extends Post {
 			: null;
 	}
 
+	/**
+	 * @return string
+	 */
 	function filepath() {
 		return $this->_filepath;
+	}
+
+	/**
+	 * @return string
+	 */
+	function dirpath() {
+		return dirname( $this->_filepath );
+	}
+
+	/**
+	 * @return string
+	 */
+	function basename() {
+		return basename( $this->_filepath );
 	}
 
 	/**
@@ -110,10 +127,18 @@ class Media extends Post {
 	}
 
 	/**
+	 * URL of the actual attached file
 	 * @return string
 	 */
 	function url() {
 		return WP_Ops::media()->uploads_baseurl() . "/{$this->uploads_filepath()}";
+	}
+
+	/**
+	 * @return string
+	 */
+	function url_path() {
+		return dirname( $this->url() );
 	}
 
 	/**

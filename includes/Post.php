@@ -83,6 +83,9 @@ class Post {
 	 */
 	function embed_media( $media, $args = array() ) {
 		do {
+			$args = wp_parse_args( $args, array(
+			    'post_slug' => '',
+			));
 			if ( empty( $this->_post_id ) ) {
 				break;
 			}
@@ -109,9 +112,11 @@ class Post {
 			));
 
 			WP_Ops::logger()->log(
-				"Embedded file [%s] in content for post %d.\n",
+				"Attachment ID %d for post ID %d embedded image [%s] (post slug is '%s')\n",
+				$media->attachment_id(),
+				$this->_post_id,
 				$media->uploads_filepath(),
-				$this->_post_id
+				Util::get_arg( $args[ 'post_slug' ] )
 			);
 
 		} while ( false );
@@ -126,8 +131,9 @@ class Post {
 	 */
 	function feature_media( $media, $args = array() ) {
 		$args = Util::parse_args( $args );
-		$args[ 'featured-image' ] = true;
-		return $this->attach_media( $media, $args );
+		$args[ 'featured_image' ] = true;
+		$result = $this->attach_media( $media, $args );
+		return $result;
 	}
 
 	/**
@@ -137,16 +143,21 @@ class Post {
 	 * @return Media
 	 */
 	function attach_media( $media, $args = array() ) {
-		$media = Media_Ops::normalize_media( $media );
+		$media = WP_Ops::media()->normalize_media( $media );
 		$title = wp_strip_all_tags( $media->title() );
 		$args = Util::parse_args( $args, array(
+			'featured_image'    => false,
 			'title'             => $title,
 			'caption'           => $title,
 			'alt'               => $title,
 			'desc'              => $title,
+			'attach_type'       => Media_Ops::FILE_ATTACH_TYPE,
+			'post_slug'         => sanitize_title_with_dashes( $title ),
 		));
 		$media->set_parent_id( $args[ 'post_id' ] = $this->_post_id );
-		return WP_Ops::media()->import( $media, $args );
+		$result = WP_Ops::media()->attach( $media, $args );
+		return $result;
+
 	}
 
 	/**
@@ -160,15 +171,22 @@ class Post {
 			$args = Util::parse_args( $args, array(
 				'meta_key'   => function () use ( $media ) { return $media->meta_key(); },
 				'meta_value' => function () use ( $media ) { return $media->uploads_filepath(); },
+				'post_slug'  => function () { return get_post( $this->_post_id )->post_name; },
 			));
 			$meta_key = Util::get_arg( $args[ 'meta_key' ] );
+			$meta_value = Util::get_arg( $args[ 'meta_value' ] );
+			$post_slug = Util::get_arg( $args[ 'post_slug' ] );
 			$post_meta = new PostMeta( $meta_key, "post_id={$this->_post_id}" );
 			$media->set_meta( $post_meta );
-			$post_meta->update( Util::get_arg( $args[ 'meta_value' ] ) );
+			$post_meta->update( $meta_value );
+			$posts = WP_Ops::post()->find_by( 'guid', $media->url() );
 			WP_Ops::logger()->log(
-				"Added meta key [%s] to post %d.\n",
+				"Attachment ID %d for post ID %d set custom field '%s' to image [%s] (post slug is '%s')\n",
+				key( $posts ),
+				$this->_post_id,
 				$meta_key,
-				$this->_post_id
+				$meta_value,
+				$post_slug
 			);
 		} while ( false );
 		return $media;
@@ -183,10 +201,14 @@ class Post {
 	 */
 	function associate_media( $type, $media, $args = array() ) {
 		$args = Util::parse_args( $args, array(
-			'media_obj' => null,
+			'media_obj'  => null,
+			'log_status' => true,
+			'attach_type' => Media_Ops::FILE_ATTACH_TYPE
 		));
+		if ( isset( $args[ 'media_obj' ]->post_slug ) ) {
+			$args[ 'post_slug' ] = $args[ 'media_obj' ]->post_slug;
+		}
 		$media->set_image_type( $type );
-		$args = Util::parse_args( $args );
 		$media->set_parent_id( $this->_post_id );
 		switch ( $type ) {
 			default:

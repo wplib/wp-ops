@@ -192,6 +192,9 @@ class Post_Ops {
 		$results = array();
 		$post_media = WP_Ops::transform_test_data( $post_media );
 		foreach( $post_media as $media_obj ) {
+			$args = array(
+				'media_obj' => $media_obj
+			);
 			$media_path = preg_replace(
 				'#^(.+)(-\d{2,4}x\d{2,4})(\.[a-z]{3,10})$#',
 				'$1$3',
@@ -206,6 +209,7 @@ class Post_Ops {
 				continue;
 			}
 			if ( ! isset( $media_items[ $media_path ] ) ) {
+				$args[ 'meta_value' ] = $media_path;
 				$media_path = ltrim( WP_Ops::media()->extract_uploads_path( $media_path ), '/' );
 			}
 			if ( ! isset( $media_items[ $media_path ] ) ) {
@@ -220,9 +224,7 @@ class Post_Ops {
 			$media = $media_items[ $media_path ];
 			$type = $media_obj->type;
 			$key = "{$slug}-{$type}-{$media_path}";
-			$media = $post->associate_media( $type, $media, array(
-				'media_obj' => $media_obj
-			));
+			$media = $post->associate_media( $type, $media, $args );
 			$media->set_parent_id( $post->post_id() );
 			$results[ $type ][ $key ] = $media;
 

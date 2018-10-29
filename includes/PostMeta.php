@@ -8,9 +8,10 @@ class PostMeta extends Meta {
 	 * Meta constructor.
 	 *
 	 * @param int $meta_id
-	 * @param array $args
+	 * @param array|string $args
 	 */
 	function __construct( $meta_id, $args = array() ) {
+		$args = wp_parse_args( $args );
 		if ( isset( $args[ 'post_id' ] ) ) {
 			$args[ 'object_id' ] = intval( $args[ 'post_id' ] );
 			unset( $args[ 'post_id' ] );
